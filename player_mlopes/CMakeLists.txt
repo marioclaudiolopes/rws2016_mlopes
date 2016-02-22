@@ -129,6 +129,7 @@ include_directories(
 
 ## Declare a C++ executable
 # add_executable(player_mlopes_node src/player_mlopes_node.cpp)
+add_executable(player_mlopes_node src/player_mlopes_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
