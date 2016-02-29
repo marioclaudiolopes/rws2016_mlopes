@@ -79,45 +79,47 @@ namespace rws2016_mlopes
             tf::TransformListener listener; //gets transforms from the system
     };
 
+    //Class MyPlayer extends class Player
+    //class MyPlayer: public Player ///Hidden for better visualization
 
-	//Class myPlayer extends class Player
-	class MyPlayer: public Player /*hidden for better visualization*/
+//Class myPlayer extends class Player
+class MyPlayer: public Player /*hidden for better visualization*/
 	{
-   		public: 
+   	 public: 
 
-   		MyPlayer(std::string name, std::string team): Player(name)
-   	 	{
-   	     		setTeamName(team);
-   	 	}
+   	 MyPlayer(std::string name, std::string team): Player(name)
+   	 {
+   	     setTeamName(team);
+   	 }
 
 	};
 
-	class Team
-	{
-		public:
+class Team
+{
+	public:
 	
-		Team(std::string team, std::vector<std::string> player_names)
+	Team(std::string team, std::vector<std::string> player_names)
+	{
+		name=team;
+		for (size_t i=0; i < player_names.size(); ++i)
 		{
-			name=team;
-			for (size_t i=0; i < player_names.size(); ++i)
-			{
 
-				boost::shared_ptr<Player> p(new Player (player_names[i]));
-				p->setTeamName(name);
-				players.push_back(p);
-			}
+			boost::shared_ptr<Player> p(new Player (player_names[i]));
+			p->setTeamName(name);
+			players.push_back(p);
 		}
+	}
 
-		void printTeamInfo(void)
-		{
-			for(size_t i=0; i<players.size(); ++i)
-				cout << players[i]->name << endl;
-		}
+	void printTeamInfo(void)
+	{
+		for(size_t i=0; i<players.size(); ++i)
+			cout << players[i]->name << endl;
+	}
 
-		string name;
-		std::vector<boost::shared_ptr<Player> >players;
+	string name;
+	std::vector<boost::shared_ptr<Player> >players;
 
-	};
+};
 
     //class Team  ///Hidden for better visualization
 
