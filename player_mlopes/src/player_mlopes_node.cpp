@@ -90,6 +90,49 @@ namespace rws2016_mlopes
    	     		setTeamName(team);
    	 	}
 
+		/**
+ 		* @brief Moves MyPlayer
+ 		*
+ 		* @param displacement the liner movement of the player, bounded by [-0.1, 1]
+ 		* @param turn_angle the turn angle of the player, bounded by  [-M_PI/60, M_PI/60]
+ 		*/
+ 		void move(double displacement, double turn_angle)
+ 		{
+
+			double dispMax=1;
+			double dispMin=-0.1;
+			double angBound=M_PI/60;
+
+			// Upper Bound
+			if (displacement>dispMax)
+				displacement=dispMax;
+
+			// Lower Bound
+			if (displacement<dispMin)
+				displacement=dispMin;
+
+
+			if (turn_angle>angBound)
+				turn_angle=angBound;
+			else if (turn_angle<-angBound)
+				turn_angle=-angBound;
+
+
+ 			static tf::TransformBroadcaster br;
+ 			tf::Transform transform;
+ 			transform.setOrigin( tf::Vector3(displacement, 0, 0.0) );
+
+  			tf::Quaternion q;
+  			q.setRPY(0, 0, turn_angle);
+  			transform.setRotation(q);
+	
+			tf::Transform t = getPose();
+                	t = t  * transform;
+
+  			//Send the new transform to ROS
+                	br.sendTransform(tf::StampedTransform(t, ros::Time::now(), "/map", name));
+ 		}
+
 	};
 
 	class Team
@@ -139,6 +182,10 @@ int main(int argc, char** argv)
         //Test the get pose method                                                                                     
         tf::Transform t = my_player.getPose();
         cout << "x = " << t.getOrigin().x() << " y = " << t.getOrigin().y() << endl;
+
+	//Test the move method
+        my_player.move(0.1, -M_PI/6);
+
 
         ros::spinOnce();
         loop_rate.sleep();
