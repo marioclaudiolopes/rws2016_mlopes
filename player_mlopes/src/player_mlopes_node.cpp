@@ -419,12 +419,12 @@ namespace rws2016_mlopes
                 double displacement;
 
 //		if (distClosPrey<distClosHunt || distClosHunt > 2)
-			displacement = msg.dog; //I am a dog, others may choose another animal
+			displacement = -0.1; //msg.dog; //I am a dog, others may choose another animal
 //		else
-//			displacement = -msg.dog;
+//			displacement = -.1;
 
                 //Step 4
-                move(displacement, angle);
+                move(displacement, -angle);
 
             }
 
