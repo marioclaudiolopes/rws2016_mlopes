@@ -5,6 +5,9 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h> 
 
+#include <rws2016_libs/team_info.h>
+#include <rws2016_msgs/GameMove.h>
+
 using namespace std;
 
 namespace rws2016_mlopes
@@ -53,14 +56,14 @@ namespace rws2016_mlopes
 			std::string first_refframe=p.name;
 			std::string second_refframe=name;
 
-			ros::Duration(0.1).sleep(); //To allow the listener to hear messages
+			ros::Duration(0.01).sleep(); //To allow the listener to hear messages
                		tf::StampedTransform st; //The pose of the player
                 	try{
                 	    listener.lookupTransform(first_refframe, second_refframe, ros::Time(0), st);
                 	}
                 	catch (tf::TransformException ex){
                 		ROS_ERROR("%s",ex.what());
-                		ros::Duration(1.0).sleep();
+                		ros::Duration(0.1).sleep();
                 	}
 
                 	tf::Transform t;
@@ -74,6 +77,34 @@ namespace rws2016_mlopes
 			return distNorm;
 		}
 
+		double getAngle(string player_name)
+            	{
+                //computing the distance 
+                string first_refframe = name;
+                string second_refframe = player_name;
+
+                ros::Duration(0.01).sleep(); //To allow the listener to hear messages
+                tf::StampedTransform st; //The pose of the player
+                try{
+                    listener.lookupTransform(first_refframe, second_refframe, ros::Time(0), st);
+                }
+                catch (tf::TransformException& ex){
+                    ROS_ERROR("%s",ex.what());
+                    ros::Duration(0.1).sleep();
+                }
+
+                tf::Transform t;
+                t.setOrigin(st.getOrigin());
+                t.setRotation(st.getRotation());
+
+                double x = t.getOrigin().x();
+                double y = t.getOrigin().y();
+
+                double angle = atan2(y,x);
+                return angle;
+
+            	}
+
 
             //Gets team name (accessor)
             string getTeamName(void) {return team;}
@@ -85,14 +116,14 @@ namespace rws2016_mlopes
              */
             tf::Transform getPose(void)
             {
-                ros::Duration(0.1).sleep(); //To allow the listener to hear messages
+                ros::Duration(0.01).sleep(); //To allow the listener to hear messages
                 tf::StampedTransform st; //The pose of the player
                 try{
                     listener.lookupTransform("/map", name, ros::Time(0), st);
                 }
                 catch (tf::TransformException ex){
                     ROS_ERROR("%s",ex.what());
-                    ros::Duration(1.0).sleep();
+                    ros::Duration(0.1).sleep();
                 }
 
                 tf::Transform t;
@@ -146,22 +177,64 @@ namespace rws2016_mlopes
 
 		tf::TransformBroadcaster br;
 
-		boost::shared_ptr<Team> prey_team;
+		/**
+             * @brief The teams
+             */
+            boost::shared_ptr<Team> my_team;
+            boost::shared_ptr<Team> hunter_team;
+            boost::shared_ptr<Team> prey_team;
+
+            boost::shared_ptr<ros::Subscriber> _sub; 
 		
 //("green", prey_names);
 
 
    		MyPlayer(std::string name, std::string team): Player(name)
    	 	{
-   	     		setTeamName(team);
+//   	     		setTeamName(team);
 
-			//Initialize position to 0,0,0
-            		tf::Transform t;
-            		t.setOrigin( tf::Vector3(0.0, 0.0, 0.0) );
-            		tf::Quaternion q; q.setRPY(0, 0, 0);
-            		t.setRotation(q);
-            		br.sendTransform(tf::StampedTransform(t, ros::Time::now(), "/map", name));
+//			//Initialize position to 0,0,0
+//            		tf::Transform t;
+//            		t.setOrigin( tf::Vector3(0.0, 0.0, 0.0) );
+//            		tf::Quaternion q; q.setRPY(0, 0, 0);
+//            		t.setRotation(q);
+//            		br.sendTransform(tf::StampedTransform(t, ros::Time::now(), "/map", name));
 
+			setTeamName(team);
+            ros::NodeHandle node;
+
+            //Initialize teams
+            vector<string> myTeam_names, myHunters_names, myPreys_names;
+            string myTeamId, myHuntersId, myPreysId;
+
+            if (!team_info(node, myTeam_names, myHunters_names, myPreys_names, myTeamId, myHuntersId, myPreysId))
+                ROS_ERROR("Something went wrong reading teams");
+
+            my_team = (boost::shared_ptr<Team>) new Team(myTeamId, myTeam_names);
+            hunter_team = (boost::shared_ptr<Team>) new Team(myHuntersId, myHunters_names);
+            prey_team = (boost::shared_ptr<Team>) new Team(myPreysId, myPreys_names);
+
+            my_team->printTeamInfo();
+            hunter_team->printTeamInfo();
+            prey_team->printTeamInfo();
+
+            //Initialize position according to team
+            ros::Duration(0.5).sleep(); //sleep to make sure the time is correct
+            tf::Transform t;
+            //srand((unsigned)time(NULL)); // To start the player in a random location
+            struct timeval t1;      
+            gettimeofday(&t1, NULL);
+        srand(t1.tv_usec);
+            double X=((((double)rand()/(double)RAND_MAX) ) * 2 -1) * 5 ;
+            double Y=((((double)rand()/(double)RAND_MAX) ) * 2 -1) * 5 ;
+            t.setOrigin( tf::Vector3(X, Y, 0.0) );
+            tf::Quaternion q; q.setRPY(0, 0, 0);
+            t.setRotation(q);
+            br.sendTransform(tf::StampedTransform(t, ros::Time::now(), "/map", name));
+
+            //initialize the subscriber
+            _sub = (boost::shared_ptr<ros::Subscriber>) new ros::Subscriber;
+            *_sub = node.subscribe("/game_move", 1, &MyPlayer::moveCallback, this);
 
 //			vector<string> myteam_names;
 //	myteam_names.push_back("mlopes");
@@ -178,13 +251,13 @@ namespace rws2016_mlopes
 //	rws2016_mlopes::Team hunter_team("blue", hunter_names);
 //	hunter_team.printTeamInfo();
 			
-			vector<string> prey_names;
-			prey_names.push_back("dsilva");
-			Team prey_team("green", prey_names);
-			//prey_team = (boost::shared_ptr<Team>) new Team("green", prey_names);
-			prey_team.printTeamInfo();
+//			vector<string> prey_names;
+//			prey_names.push_back("dsilva");
+//			Team prey_team("green", prey_names);
+//			//prey_team = (boost::shared_ptr<Team>) new Team("green", prey_names);
+//			prey_team.printTeamInfo();
 
-			cout << prey_team.players[0]->name << endl;
+//			cout << prey_team.players[0]->name << endl;
    	 	}
 
 		/**
@@ -197,7 +270,7 @@ namespace rws2016_mlopes
  		{
 			double dispMax=1;
 			double dispMin=-0.1;
-			double angBound=M_PI/60;
+			double angBound=M_PI/30;
 
 			// Upper Bound
 			if (displacement>dispMax)
@@ -229,51 +302,101 @@ namespace rws2016_mlopes
  		}
 
 
-		
+		string getNameOfClosestPrey(void)
+            {
+                double prey_dist = getDistance(*prey_team->players[0]);
+                string prey_name = prey_team->players[0]->name;
 
+                for (size_t i = 1; i < prey_team->players.size(); ++i)
+                {
+                    double d = getDistance(*prey_team->players[i]);
+
+                    if (d < prey_dist) //A new minimum
+                    {
+                        prey_dist = d;
+                        prey_name = prey_team->players[i]->name;
+                    }
+                }
+
+                return prey_name;
+            }
+
+		string getNameOfClosestHunter(void)
+            {
+                double hunter_dist = getDistance(*hunter_team->players[0]);
+                string hunter_name = hunter_team->players[0]->name;
+
+                for (size_t i = 1; i < hunter_team->players.size(); ++i)
+                {
+                    double d = getDistance(*hunter_team->players[i]);
+
+                    if (d < hunter_dist) //A new minimum
+                    {
+                        hunter_dist = d;
+                        hunter_name = hunter_team->players[i]->name;
+                    }
+                }
+
+                return hunter_name;
+            }
+		
+	/**
+             * @brief called whenever a /game_move msg is received
+             *
+             * @param msg the msg with the animal values
+             */
+            void moveCallback(const rws2016_msgs::GameMove& msg)
+            {
+                ROS_INFO("player %s received game_move msg", name.c_str()); 
+
+                //I will encode a very simple hunting behaviour:
+                //
+                //1. Get closest prey name
+                //2. Get angle to closest prey
+                //3. Compute maximum displacement
+                //4. Move maximum displacement towards angle to prey (limited by min, max)
+
+                //Step 1
+                string closest_prey = getNameOfClosestPrey();
+                ROS_INFO("Closest prey is %s", closest_prey.c_str());
+
+                //Step 2
+                double angle = getAngle(closest_prey);
+
+                //Step 3
+                double displacement = msg.dog; //I am a dog, others may choose another animal
+
+                //Step 4
+                move(displacement, angle);
+
+            }
 
 
 	};
 
-	
-
     //class Team  ///Hidden for better visualization
 
-} //end of namespace rws2016_moliveira
+} //end of namespace rws2016_mlopes
 
+/**
+ * @brief The main function
+ *
+ * @param argc number of command line arguments
+ * @param argv values of command line arguments
+ *
+ * @return result
+ */
 int main(int argc, char** argv)
 {
     //initialize ROS stuff
-    ros::init(argc, argv, "player_mlopes_node");
+    ros::init(argc, argv, "mlopes");
     ros::NodeHandle node;
 
     //Creating an instance of class MyPlayer
     rws2016_mlopes::MyPlayer my_player("mlopes", "red");
 
-
-
-
-	rws2016_mlopes::Player lalmeida_player("lalmeida");
-
-    	//Infinite loop
-    	ros::Rate loop_rate(10);
-    	while (ros::ok())
-    	{
-       		//Test the get pose method                                                                                     
-        	tf::Transform t = my_player.getPose();
-        	cout << "x = " << t.getOrigin().x() << " y = " << t.getOrigin().y() << endl;
-
-		double dist_from_my_player_to_lalmeida = my_player.getDistance(lalmeida_player);
-        	cout << "dist_from_my_player_to_lalmeida = " << dist_from_my_player_to_lalmeida << endl;
-
-		//Test the move method
-        	my_player.move(0.1, -M_PI/6);
-
-        	ros::spinOnce();
-        	loop_rate.sleep();
-    	}
-
-    	return 0;
+    //Infinite loop
+    ros::spin();
 }
 
 			// double ang = t.getRotation().z(); // Para rotação
