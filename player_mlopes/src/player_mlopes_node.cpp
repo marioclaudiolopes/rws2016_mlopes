@@ -100,7 +100,12 @@ namespace rws2016_mlopes
                 double x = t.getOrigin().x();
                 double y = t.getOrigin().y();
 
-                double angle = atan2(y,x);
+                double angle ;
+	
+
+		angle = atan2(y,x);
+
+
                 return angle;
 
             	}
@@ -302,13 +307,33 @@ namespace rws2016_mlopes
  		}
 
 
+//		string getNameOfClosestPrey(double *distPrey)
+//            	{
+//                	double prey_dist = getDistance(*prey_team->players[0]);
+//                	string prey_name = prey_team->players[0]->name;
+
+//                	for (size_t i = 1; i < prey_team->players.size(); ++i)
+//                	{
+//                   	 	double d = getDistance(*prey_team->players[i]);
+
+//                    		if (d < prey_dist) //A new minimum
+//                    		{
+//                        		prey_dist = d;
+//                        		prey_name = prey_team->players[i]->name;
+//                    		}
+//                	}
+//			
+//			*distPrey = prey_dist;
+
+//                	return prey_name;
+//            	}
+
 		string getNameOfClosestPrey(double *distPrey)
             	{
                 	double prey_dist = getDistance(*prey_team->players[0]);
                 	string prey_name = prey_team->players[0]->name;
 
-                	for (size_t i = 1; i < prey_team->players.size(); ++i)
-                	{
+                	int i=2;
                    	 	double d = getDistance(*prey_team->players[i]);
 
                     		if (d < prey_dist) //A new minimum
@@ -316,9 +341,9 @@ namespace rws2016_mlopes
                         		prey_dist = d;
                         		prey_name = prey_team->players[i]->name;
                     		}
-                	}
+
 			
-			*distPrey = prey_dist;
+			*distPrey = d;
 
                 	return prey_name;
             	}
@@ -370,13 +395,21 @@ namespace rws2016_mlopes
 
                 //Step 2
 		double angle;
-		if (distClosPrey<distClosHunt)
+		
+		cout << "dist_to_prey:" << distClosPrey << " | dist_to_hunter:" << distClosHunt << endl;
+
+//		if (distClosPrey<distClosHunt)
 			angle = getAngle(closest_prey);
-		else
-			angle = M_PI+getAngle(closest_hunt);
+//		else
+//			angle = getAngle(closest_hunt);
 
                 //Step 3
-                double displacement = msg.dog; //I am a dog, others may choose another animal
+                double displacement;
+
+//		if (distClosPrey<distClosHunt)
+			displacement = msg.dog; //I am a dog, others may choose another animal
+//		else
+//			displacement = -msg.dog;
 
                 //Step 4
                 move(displacement, angle);
