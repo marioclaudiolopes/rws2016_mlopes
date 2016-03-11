@@ -100,7 +100,7 @@ namespace rws2016_mlopes
                 double x = t.getOrigin().x();
                 double y = t.getOrigin().y();
 
-                double angle ;
+                double angle;
 	
 
 		angle = atan2(y,x);
@@ -333,7 +333,8 @@ namespace rws2016_mlopes
                 	double prey_dist = getDistance(*prey_team->players[0]);
                 	string prey_name = prey_team->players[0]->name;
 
-                	int i=2;
+                	for (size_t i = 1; i < prey_team->players.size(); ++i)
+                	{
                    	 	double d = getDistance(*prey_team->players[i]);
 
                     		if (d < prey_dist) //A new minimum
@@ -342,8 +343,8 @@ namespace rws2016_mlopes
                         		prey_name = prey_team->players[i]->name;
                     		}
 
-			
-			*distPrey = d;
+			}
+			*distPrey = prey_dist;
 
                 	return prey_name;
             	}
@@ -398,18 +399,18 @@ namespace rws2016_mlopes
 		
 		cout << "dist_to_prey:" << distClosPrey << " | dist_to_hunter:" << distClosHunt << endl;
 
-//		if (distClosPrey<distClosHunt)
+		if (distClosPrey<distClosHunt || distClosHunt > 3)
 			angle = getAngle(closest_prey);
-//		else
-//			angle = getAngle(closest_hunt);
+		else
+			angle = getAngle(closest_hunt);
 
                 //Step 3
                 double displacement;
 
-//		if (distClosPrey<distClosHunt)
+		if (distClosPrey<distClosHunt || distClosHunt > 3)
 			displacement = msg.dog; //I am a dog, others may choose another animal
-//		else
-//			displacement = -msg.dog;
+		else
+			displacement = -msg.dog;
 
                 //Step 4
                 move(displacement, angle);
