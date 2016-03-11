@@ -399,7 +399,7 @@ namespace rws2016_mlopes
 		
 		cout << "dist_to_prey:" << distClosPrey << " | dist_to_hunter:" << distClosHunt << endl;
 
-		if (distClosPrey<distClosHunt || distClosHunt > 3)
+		if (distClosPrey<distClosHunt || distClosHunt > 1.5)
 			angle = getAngle(closest_prey);
 		else
 			angle = getAngle(closest_hunt);
@@ -407,7 +407,7 @@ namespace rws2016_mlopes
                 //Step 3
                 double displacement;
 
-		if (distClosPrey<distClosHunt || distClosHunt > 3)
+		if (distClosPrey<distClosHunt || distClosHunt > 1.5)
 			displacement = msg.dog; //I am a dog, others may choose another animal
 		else
 			displacement = -msg.dog;
