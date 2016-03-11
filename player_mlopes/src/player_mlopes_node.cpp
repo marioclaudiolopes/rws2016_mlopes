@@ -302,43 +302,46 @@ namespace rws2016_mlopes
  		}
 
 
-		string getNameOfClosestPrey(void)
-            {
-                double prey_dist = getDistance(*prey_team->players[0]);
-                string prey_name = prey_team->players[0]->name;
+		string getNameOfClosestPrey(double *distPrey)
+            	{
+                	double prey_dist = getDistance(*prey_team->players[0]);
+                	string prey_name = prey_team->players[0]->name;
 
-                for (size_t i = 1; i < prey_team->players.size(); ++i)
-                {
-                    double d = getDistance(*prey_team->players[i]);
+                	for (size_t i = 1; i < prey_team->players.size(); ++i)
+                	{
+                   	 	double d = getDistance(*prey_team->players[i]);
 
-                    if (d < prey_dist) //A new minimum
-                    {
-                        prey_dist = d;
-                        prey_name = prey_team->players[i]->name;
-                    }
-                }
+                    		if (d < prey_dist) //A new minimum
+                    		{
+                        		prey_dist = d;
+                        		prey_name = prey_team->players[i]->name;
+                    		}
+                	}
+			
+			distPrey = &prey_dist;
 
-                return prey_name;
-            }
+                	return prey_name;
+            	}
 
-		string getNameOfClosestHunter(void)
-            {
-                double hunter_dist = getDistance(*hunter_team->players[0]);
-                string hunter_name = hunter_team->players[0]->name;
+		string getNameOfClosestHunter(double *distHunt)
+            	{
+                	double hunter_dist = getDistance(*hunter_team->players[0]);
+                	string hunter_name = hunter_team->players[0]->name;
 
-                for (size_t i = 1; i < hunter_team->players.size(); ++i)
-                {
-                    double d = getDistance(*hunter_team->players[i]);
+                	for (size_t i = 1; i < hunter_team->players.size(); ++i)
+                	{
+                		double d = getDistance(*hunter_team->players[i]);
 
-                    if (d < hunter_dist) //A new minimum
-                    {
-                        hunter_dist = d;
-                        hunter_name = hunter_team->players[i]->name;
-                    }
-                }
+                    		if (d < hunter_dist) //A new minimum
+                    		{
+                       			hunter_dist = d;
+                       			hunter_name = hunter_team->players[i]->name;
+                    		}
+                	}
+			distHunt = &hunter_dist;
 
-                return hunter_name;
-            }
+               		return hunter_name;
+            	}
 		
 	/**
              * @brief called whenever a /game_move msg is received
@@ -356,8 +359,13 @@ namespace rws2016_mlopes
                 //3. Compute maximum displacement
                 //4. Move maximum displacement towards angle to prey (limited by min, max)
 
+		double distClosPrey;
+		double distClosHunt;
+
                 //Step 1
-                string closest_prey = getNameOfClosestPrey();
+                string closest_prey = getNameOfClosestPrey( &distClosPrey);
+		string closest_hunt = getNameOfClosestHunter( &distClosHunt);
+
                 ROS_INFO("Closest prey is %s", closest_prey.c_str());
 
                 //Step 2
