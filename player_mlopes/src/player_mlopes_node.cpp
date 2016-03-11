@@ -318,7 +318,7 @@ namespace rws2016_mlopes
                     		}
                 	}
 			
-			distPrey = &prey_dist;
+			*distPrey = prey_dist;
 
                 	return prey_name;
             	}
@@ -338,7 +338,7 @@ namespace rws2016_mlopes
                        			hunter_name = hunter_team->players[i]->name;
                     		}
                 	}
-			distHunt = &hunter_dist;
+			*distHunt = hunter_dist;
 
                		return hunter_name;
             	}
@@ -369,7 +369,11 @@ namespace rws2016_mlopes
                 ROS_INFO("Closest prey is %s", closest_prey.c_str());
 
                 //Step 2
-                double angle = getAngle(closest_prey);
+		double angle;
+		if (distClosPrey<distClosHunt)
+			angle = getAngle(closest_prey);
+		else
+			angle = M_PI+getAngle(closest_hunt);
 
                 //Step 3
                 double displacement = msg.dog; //I am a dog, others may choose another animal
